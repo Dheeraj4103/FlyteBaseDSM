@@ -1,0 +1,20 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_1 = require("../middleware/auth");
+const missionController_1 = require("../controllers/missionController");
+const validation_1 = require("../middleware/validation");
+const router = (0, express_1.Router)();
+router.use(auth_1.authenticate);
+router.get('/', missionController_1.getAllMissions);
+router.get('/:id', missionController_1.getMissionById);
+router.get('/:id/flight-logs', missionController_1.getMissionFlightLogs);
+router.post('/', (0, auth_1.authorize)('OPERATOR', 'ADMIN'), validation_1.validateMission, missionController_1.createMission);
+router.put('/:id', (0, auth_1.authorize)('OPERATOR', 'ADMIN'), validation_1.validateMission, missionController_1.updateMission);
+router.delete('/:id', (0, auth_1.authorize)('ADMIN'), missionController_1.deleteMission);
+router.post('/:id/start', (0, auth_1.authorize)('OPERATOR', 'ADMIN'), missionController_1.startMission);
+router.post('/:id/pause', (0, auth_1.authorize)('OPERATOR', 'ADMIN'), missionController_1.pauseMission);
+router.post('/:id/resume', (0, auth_1.authorize)('OPERATOR', 'ADMIN'), missionController_1.resumeMission);
+router.post('/:id/abort', (0, auth_1.authorize)('OPERATOR', 'ADMIN'), missionController_1.abortMission);
+exports.default = router;
+//# sourceMappingURL=missions.js.map

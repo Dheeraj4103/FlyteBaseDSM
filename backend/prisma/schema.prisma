@@ -1,0 +1,223 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid()) @map("_id")
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  role      UserRole @default(OPERATOR)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  missions    Mission[]
+  sites       Site[]
+  analytics   Analytics[]
+
+  @@map("users")
+}
+
+model Site {
+  id          String   @id @default(cuid()) @map("_id")
+  name        String
+  description String?
+  address     String
+  latitude    Float
+  longitude   Float
+  area        Float    // in square meters
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String
+  createdByUser User   @relation(fields: [createdBy], references: [id])
+
+  waypoints   Json?    // Added field
+  surveyArea  Json?    // Added field
+
+  // Relations
+  missions    Mission[]
+  drones      Drone[]
+  analytics   Analytics[]
+
+  @@map("sites")
+}
+
+model Drone {
+  id           String      @id @default(cuid()) @map("_id")
+  name         String
+  model        String
+  serialNumber String      @unique
+  status       DroneStatus @default(AVAILABLE)
+  batteryLevel Float       @default(100.0) // percentage
+  maxFlightTime Int        // in minutes
+  maxPayload   Float       // in kg
+  maxAltitude  Int         // in meters
+  maxSpeed     Float       // in m/s
+  isActive     Boolean     @default(true)
+  lastMaintenance DateTime?
+  nextMaintenance DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  siteId       String?
+  site         Site?       @relation(fields: [siteId], references: [id])
+
+  // Relations
+  missions     Mission[]
+
+  @@map("drones")
+}
+
+model Mission {
+  id          String        @id @default(cuid()) @map("_id")
+  name        String
+  description String?
+  type        MissionType
+  status      MissionStatus @default(PLANNED)
+  priority    Priority      @default(MEDIUM)
+  
+  // Flight parameters
+  altitude    Int           // in meters
+  speed       Float         // in m/s
+  overlap     Float         // percentage
+  pattern     FlightPattern
+  
+  // Mission area
+  waypoints   Json          // Array of coordinates
+  surveyArea  Json          // GeoJSON polygon
+  
+  // Timing
+  estimatedDuration Int     // in minutes
+  scheduledAt       DateTime?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  
+  // Mission data
+  actualDuration    Int?    // in minutes
+  actualDistance    Float?  // in meters
+  coverageArea      Float?  // in square meters
+  
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  createdBy   String
+  createdByUser User        @relation(fields: [createdBy], references: [id])
+  siteId      String
+  site        Site          @relation(fields: [siteId], references: [id])
+  droneId     String?
+  drone       Drone?        @relation(fields: [droneId], references: [id])
+
+  // Relations
+  flightLogs  FlightLog[]
+  analytics   Analytics[]
+
+  @@map("missions")
+}
+
+model FlightLog {
+  id        String   @id @default(cuid()) @map("_id")
+  timestamp DateTime @default(now())
+  latitude  Float
+  longitude Float
+  altitude  Float
+  speed     Float
+  batteryLevel Float
+  status    FlightStatus
+  missionId String
+  mission   Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
+
+  @@map("flight_logs")
+}
+
+model Analytics {
+  id        String   @id @default(cuid()) @map("_id")
+  type      AnalyticsType
+  data      Json
+  period    String   // daily, weekly, monthly, yearly
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime @default(now())
+  createdBy String
+  createdByUser User @relation(fields: [createdBy], references: [id])
+  missionId String?
+  mission   Mission? @relation(fields: [missionId], references: [id])
+  siteId    String?
+  site      Site?    @relation(fields: [siteId], references: [id])
+
+  @@map("analytics")
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  OPERATOR
+  VIEWER
+}
+
+enum DroneStatus {
+  AVAILABLE
+  IN_MISSION
+  MAINTENANCE
+  OFFLINE
+  ERROR
+}
+
+enum MissionType {
+  INSPECTION
+  SECURITY_PATROL
+  SITE_MAPPING
+  SURVEY
+  CUSTOM
+}
+
+enum MissionStatus {
+  PLANNED
+  SCHEDULED
+  IN_PROGRESS
+  PAUSED
+  COMPLETED
+  ABORTED
+  FAILED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum FlightPattern {
+  GRID
+  CROSSHATCH
+  PERIMETER
+  SPIRAL
+  CUSTOM
+}
+
+enum FlightStatus {
+  TAKEOFF
+  CRUISE
+  SURVEYING
+  LANDING
+  HOVERING
+  ERROR
+}
+
+enum AnalyticsType {
+  MISSION_SUMMARY
+  FLEET_PERFORMANCE
+  SITE_COVERAGE
+  OPERATIONAL_EFFICIENCY
+  MAINTENANCE_SCHEDULE
+} 
