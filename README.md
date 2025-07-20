@@ -1,4 +1,10 @@
-# FlyteBase DSM - Drone Survey Management System
+# FlyteBase Drone Survey Management System
+
+## 🚀 Demo
+
+Check out a video demo of the project here: [Watch on Loom](https://www.loom.com/share/7365c5a635ec4fbabf19e0311981c1ea?sid=97c0fea6-91b7-4f28-a583-4fbb903173f5)
+
+---
 
 A comprehensive platform for managing autonomous drone surveys across multiple global sites. This system enables organizations to plan, monitor, and analyze drone missions for facility inspections, security patrols, and site mapping.
 
@@ -211,14 +217,33 @@ The API documentation is available at `/api/docs` when running the backend serve
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-For support and questions, please contact the development team or create an issue in the repository.
-
 ---
 
 **Built with ❤️ for FlyteBase**
+
+## Development Approach & Design Decisions
+
+### How did you approach the problem?
+
+- **Requirements Analysis:** Started by understanding the core requirements: managing drones, sites, and missions, with the ability to assign drones to sites and missions, and to define survey areas and waypoints.
+- **Incremental Enhancement:** Built the system incrementally, starting with basic CRUD operations for drones, sites, and missions, and then adding advanced features like associating waypoints and survey areas with sites and missions.
+- **Full-Stack Coordination:** Updated both backend (Node.js/Express + Prisma + MongoDB) and frontend (React + TypeScript) in tandem to ensure data consistency and a smooth user experience.
+- **Validation and Error Handling:** Used Zod for schema validation on both frontend and backend, ensuring that only valid data is processed and stored.
+
+### Trade-offs considered
+
+- **Schema Flexibility vs. Strictness:** Initially enforced strict CUID validation for IDs, but relaxed this to support custom string IDs (like `site-1`) for better compatibility with existing data and user expectations.
+- **Frontend vs. Backend Responsibility:** Decided to have the frontend fetch and include `waypoints` and `surveyArea` from the selected site when creating a mission, rather than having the backend infer these fields. This keeps the backend stateless and the API explicit, but requires the frontend to be aware of more business logic.
+- **Optional vs. Required Fields:** Made fields like `siteId`, `waypoints`, and `surveyArea` optional or required based on real-world workflow needs, balancing user flexibility with data integrity.
+- **Database Design:** Chose to store `waypoints` and `surveyArea` as JSON fields for maximum flexibility, at the cost of some query complexity if advanced geospatial queries are needed in the future.
+
+### Strategy for ensuring safety and adaptability
+
+- **Validation at Multiple Layers:** Used Zod for input validation and Prisma for type safety, reducing the risk of invalid or malicious data entering the system.
+- **Environment Isolation:** Added `.gitignore` rules to prevent sensitive files (like `.env`) and large dependencies (`node_modules`) from being committed to version control.
+- **Migration and Seeding:** Used Prisma migrations to safely evolve the database schema, and provided seed data to ensure the system can be reliably initialized and tested.
+- **Extensibility:** By using JSON fields for geospatial data and keeping the API design RESTful and explicit, the system can easily adapt to new requirements (e.g., supporting new types of missions or sites).
+- **Error Handling and Feedback:** Implemented clear error messages and validation feedback in both frontend and backend, making the system robust and user-friendly.
+
+**In summary:**
+The system was developed with a focus on clarity, safety, and future-proofing. Trade-offs were made to balance strict validation with real-world flexibility, and the architecture allows for easy adaptation as requirements evolve.
